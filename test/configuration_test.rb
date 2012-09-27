@@ -11,7 +11,7 @@ class ConfigurationTest < MiniTest::Unit::TestCase
   end
 
   def test_publish_to
-    assert(@config.instance.publish_to)
+    @config.instance.publish_to = 'amqp://guest:guest@localhost:5672'
 
     expected = "ballsacks"
     @config.setup { |c| c.publish_to = expected }
@@ -20,7 +20,7 @@ class ConfigurationTest < MiniTest::Unit::TestCase
   end
 
   def test_consume_from
-    assert(@config.instance.consume_from.length > 0)
+    @config.instance.consume_from = ['amqp://guest:guest@localhost:5672']
 
     expected = "nutsacks"
     @config.setup { |c| c.consume_from = expected }

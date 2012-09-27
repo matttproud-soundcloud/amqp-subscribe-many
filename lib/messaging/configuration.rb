@@ -13,10 +13,14 @@ module Messaging
       yield(Configuration.instance)
     end
 
+    # Please explicitly set this to your publishing endpoint.
+    #
     # @!attribute [r] publish_to
     #   @return [String]
     attr_accessor :publish_to
 
+    # Please explicitly set this to your consumption endpoint.
+    #
     # @!attribute [r] consume_from
     #   @return [Array<String>]
     attr_accessor :consume_from
@@ -43,8 +47,8 @@ module Messaging
 
     # @api private
     def initialize
-      @publish_to       = "amqp://guest:guest@localhost:5672"
-      @consume_from     = [publish_to]
+      @publish_to       = nil
+      @consume_from     = []
       @prefetch         = 1
       @exchange_options = { :auto_delete => false, :durable => true }
       @queue_options    = exchange_options
