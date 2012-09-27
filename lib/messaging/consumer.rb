@@ -10,6 +10,9 @@ module Messaging
       # Subscribe to a queue which will invoke {Messaging::Consumer#on_message}
       # upon receiving a message.
       #
+      # Evaluation: Lazy - #consume is required on the instance to evaluate
+      # and declare the subscriptions.
+      #
       # @param exchange [String]
       # @param type [String]
       # @param queue [String]
@@ -42,6 +45,9 @@ module Messaging
     # Opens connections, channels, and sets up and specified subscriptions
     # invoking {Messaging::Consumer#on_message} when a payload is received.
     #
+    # Evaluation: Eager - This is only required to evaluate and declare the
+    # subscriptions which have been deffered using class .subscribe
+    #
     # @return [Messaging::Consumer]
     # @api public
     def consume
@@ -58,6 +64,8 @@ module Messaging
 
     # Invoked when a message is received from any of the subscriptions.
     #
+    # @param meta [AMQP::Header] A wrapper around the AMQP headers, and ruby-amqp metadata
+    # @param payload [String] The message payload
     # @raise [NotImplementedError]
     # @api protected
     def on_message(meta, payload)
@@ -76,6 +84,51 @@ module Messaging
       consumer_connections.each do |conn|
         conn.disconnect
       end
+    end
+
+    # Subscribe to a queue which will invoke the supplied block when
+    # a message is received.
+    # Additionally declaring a binding to the specified exchange/key pair.
+    #
+    # Evaluation: Eager - this will be evaluated when called.
+    # Calls to #consume are not required.
+    #
+    # @param exchange [String]
+    # @param type [String]
+    # @param queue [String]
+    # @param key [String]
+    # @return [Messaging::Consumer]
+    # @api public
+    def subscribe(exchange, type, queue, key)
+      consumer_channels.each do |channel|
+        ex = declare_exchange(channel, exchange, type, config.exchange_options)
+        q  = declare_queue(channel, ex, queue, key, config.queue_options)
+
+        # Expliclity create an AMQP::Consumer rather than using
+        # AMQP::Queue.subscription, which is a global singleton
+        # and prevents the creation of multiple subscriptions
+        AMQP::Consumer.new(channel, q).consume.on_delivery do |meta, payload|
+          log.debug("Receieved message on channel #{meta.channel.id} from queue #{queue.inspect}")
+
+          # If an exception is raised in on_message, the message will not be
+          # acknowledged and the exception will be logged and re-raised
+          begin
+            on_message(meta, payload)
+
+            meta.ack
+          rescue => ex
+            log.error("Exception: #{ex}, " \
+              "Payload: #{payload.inspect}, " \
+              "Headers: #{meta.headers.inspect}\n" \
+              "Backtrace:\n#{ex.backtrace.join('\n')}")
+
+            # Re-raise the exception
+            raise ex
+          end
+        end
+      end
+
+      self
     end
 
     private
@@ -100,34 +153,5 @@ module Messaging
       self.class.subscriptions
     end
 
-    # Subscribe to a queue which will invoke the supplied block when
-    # a message is received.
-    # Additionally declaring a binding to the specified exchange/key pair.
-    #
-    # @param exchange [String]
-    # @param type [String]
-    # @param queue [String]
-    # @param key [String]
-    # @return [Messaging::Consumer]
-    # @api private
-    def subscribe(exchange, type, queue, key)
-      consumer_channels.each do |channel|
-        ex = declare_exchange(channel, exchange, type, config.exchange_options)
-        q  = declare_queue(channel, ex, queue, key, config.queue_options)
-
-        q.subscribe(:ack => true) do |meta, payload|
-          log.debug("Receieved message on channel #{meta.channel.id} from queue #{queue.inspect}")
-
-          # If this raises an exception, the connection
-          # will be closed, and the message requeued by the broker.
-          on_message(meta, payload)
-
-          meta.ack
-        end
-      end
-
-      self
-    end
   end
-
 end
