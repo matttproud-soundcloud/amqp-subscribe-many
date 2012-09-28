@@ -1,16 +1,17 @@
-require "singleton"
 require "logger"
 
 module Messaging
 
   # Global configuration for producer and consumer mixins.
   class Configuration
-    include Singleton
-
-    # @yieldparam [Messaging::Configuration] config
+    # Set-up an instance of [Messaging::Configuration].
+    # @yieldparam [Messaging::Configuration] an empty configuration with
+    #             basic defaults.
     # @api public
     def self.setup(&block)
-      yield(Configuration.instance)
+      configuration = Configuration.new
+      yield(configuration)
+      configuration.freeze
     end
 
     # Please explicitly set this to your publishing endpoint.
@@ -44,6 +45,8 @@ module Messaging
     # @!attribute [r] logger
     #   @return [#info, #debug, #error]
     attr_accessor :logger
+
+    private
 
     # @api private
     def initialize

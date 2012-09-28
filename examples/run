@@ -14,7 +14,7 @@ require_relative "producer_processor"
 require_relative "duplex_processor"
 
 # Setup configuration
-Messaging::Configuration.setup do |config|
+config = Messaging::Configuration.setup do |config|
   config.publish_to = "amqp://localhost"
   config.consume_from = [
     "amqp://localhost",
@@ -25,9 +25,9 @@ end
 
 EM.run do
   # Instantiate the processors
-  consumer = ConsumerProcessor.new
-  producer = ProducerProcessor.new
-  duplex   = DuplexProcessor.new
+  consumer = ConsumerProcessor.new(config)
+  producer = ProducerProcessor.new(config)
+  duplex   = DuplexProcessor.new(config)
 
   # Start the consumers
   consumer.consume

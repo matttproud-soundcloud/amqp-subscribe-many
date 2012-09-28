@@ -2,6 +2,10 @@ require_relative "test_helper"
 
 class DummyClient
   include Messaging::Client
+
+  def config
+    Messaging::Configuration.new
+  end
 end
 
 class ClientTest < MiniTest::Unit::TestCase

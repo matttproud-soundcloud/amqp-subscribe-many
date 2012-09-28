@@ -125,10 +125,17 @@ module Messaging
       config.logger
     end
 
+    # Used to set the configuration assumptions of the client.
+    #
+    # A reasonable implementation could have one return an instance attribute
+    # of the class into which this client was injected, possibly with the
+    # [Messaging::Configuration] frozen.
+    #
+    # @raise [NotImplementedError]
     # @return [Messaging::Configuration]
     # @api protected
     def config
-      Configuration.instance
+      raise NotImplementedError
     end
 
     private

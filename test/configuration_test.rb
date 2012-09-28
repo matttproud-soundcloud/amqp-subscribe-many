@@ -2,74 +2,65 @@ require_relative "test_helper"
 
 class ConfigurationTest < MiniTest::Unit::TestCase
   def setup
-    Messaging::Configuration.instance_variable_set(
-      "@__instance__",
-      Messaging::Configuration.send(:new)
-    )
-
-    @config = Messaging::Configuration
+    @config = Messaging::Configuration.new
   end
 
   def test_publish_to
-    @config.instance.publish_to = 'amqp://guest:guest@localhost:5672'
-
     expected = "ballsacks"
-    @config.setup { |c| c.publish_to = expected }
+    @config = Messaging::Configuration.setup { |c| c.publish_to = expected }
 
-    assert_equal(expected, @config.instance.publish_to)
+    assert_equal(expected, @config.publish_to)
   end
 
   def test_consume_from
-    @config.instance.consume_from = ['amqp://guest:guest@localhost:5672']
-
     expected = "nutsacks"
-    @config.setup { |c| c.consume_from = expected }
+    @config = Messaging::Configuration.setup { |c| c.consume_from = expected }
 
-    assert_equal(expected, @config.instance.consume_from)
+    assert_equal(expected, @config.consume_from)
   end
 
   def test_prefetch
-    assert(@config.instance.prefetch > 0)
+    assert(@config.prefetch > 0)
 
     expected = 7
-    @config.setup { |c| c.prefetch = expected }
+    @config = Messaging::Configuration.setup { |c| c.prefetch = expected }
 
-    assert_equal(expected, @config.instance.prefetch)
+    assert_equal(expected, @config.prefetch)
   end
 
   def test_exchange_options
-    assert(@config.instance.exchange_options)
+    assert(@config.exchange_options)
 
     expected = { :nonsense => true }
-    @config.setup { |c| c.exchange_options = expected }
+    @config = Messaging::Configuration.setup { |c| c.exchange_options = expected }
 
-    assert_equal(expected, @config.instance.exchange_options)
+    assert_equal(expected, @config.exchange_options)
   end
 
   def test_queue_options
-    assert(@config.instance.queue_options)
+    assert(@config.queue_options)
 
     expected = { :high_five => "ok!" }
-    @config.setup { |c| c.queue_options = expected }
+    @config = Messaging::Configuration.setup { |c| c.queue_options = expected }
 
-    assert_equal(expected, @config.instance.queue_options)
+    assert_equal(expected, @config.queue_options)
   end
 
   def test_reconnect_delay
-    assert(@config.instance.reconnect_delay > 0)
+    assert(@config.reconnect_delay > 0)
 
     expected = 12
-    @config.setup { |c| c.reconnect_delay = expected }
+    @config = Messaging::Configuration.setup { |c| c.reconnect_delay = expected }
 
-    assert_equal(expected, @config.instance.reconnect_delay)
+    assert_equal(expected, @config.reconnect_delay)
   end
 
   def test_logger
-    assert(@config.instance.logger)
+    assert(@config.logger)
 
     expected = "ballsacks"
-    @config.setup { |c| c.logger = expected }
+    @config = Messaging::Configuration.setup { |c| c.logger = expected }
 
-    assert_equal(expected, @config.instance.logger)
+    assert_equal(expected, @config.logger)
   end
 end

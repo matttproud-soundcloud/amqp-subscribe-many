@@ -5,6 +5,13 @@ class DuplexProcessor
   include Messaging::Producer
   include Messaging::Consumer
 
+  attr_reader :config
+
+  # @param config [Messaging::Configuration].
+  def initialize(config)
+    @config = config
+  end
+
   subscribe("exchange", "direct", "queue", "key")
 
   def on_message(meta, payload)
